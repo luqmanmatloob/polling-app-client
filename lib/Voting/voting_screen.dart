@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 class VotingScreen extends StatefulWidget {
-  final Map<String, dynamic>
-      pollData; // Receive poll data from the UserProfile screen
+  final Map<String, dynamic> pollData;
 
   const VotingScreen({super.key, required this.pollData});
 
@@ -11,10 +10,8 @@ class VotingScreen extends StatefulWidget {
 }
 
 class VotingScreenState extends State<VotingScreen> {
-  // Increment vote for a selected option
   void incrementVote(int optionIndex) {
     setState(() {
-      // Check if the optionIndex is within range and valid
       if (optionIndex >= 0 && optionIndex < widget.pollData['options'].length) {
         widget.pollData['options'][optionIndex]['votes']++;
       }

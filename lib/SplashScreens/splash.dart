@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:polling_app/UserScreen/first.dart';
+
+import '../RoleSelection/role_selection_screen.dart'; // Add your admin login screen here
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const UserLogin()),
+          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
         );
       }
     });
