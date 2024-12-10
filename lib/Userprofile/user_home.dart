@@ -13,20 +13,27 @@ class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.blueGrey[50], // Light background color for the scaffold
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0),
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Active Polls",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            const SizedBox(height: 30),
+            const Center(
+              child: Text(
+                "Active Polls",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Center(
+              child: Text(
+                "Vote for your favorite options and make your voice heard!",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
             ),
             const SizedBox(height: 30),
             Card(
-              color: Colors.white, // White color for card background
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Row(
@@ -50,7 +57,6 @@ class _UserProfileState extends State<UserProfile> {
             ),
             const SizedBox(height: 20),
             Card(
-              color: Colors.white, // White color for card background
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Row(
@@ -72,9 +78,8 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 20), // Space between cards
             Card(
-              color: Colors.white, // White color for card background
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Row(
@@ -97,6 +102,13 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             const SizedBox(height: 30), // Space below the last card
+            const Center(
+              child: Text(
+                "More polls coming soon!",
+                style: TextStyle(fontSize: 16, color: Colors.blueGrey),
+              ),
+            ),
+            const SizedBox(height: 20), // Space before footer or FAB
           ],
         ),
       ),
