@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:polling_app/AdminScreens/admin_create_poll.dart';
 import 'package:polling_app/AdminScreens/admin_publish_poll.dart';
 
 class AdminDashboard extends StatelessWidget {
@@ -65,7 +66,12 @@ class AdminDashboard extends StatelessWidget {
                       elevation: 5,
                       shadowColor: Colors.black.withOpacity(0.3),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const CreatePollScreen()));
+                    },
                     child: const Text(
                       "Create Poll",
                       style: TextStyle(fontSize: 18, color: Colors.white),
