@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:polling_app/AdminScreens/admin_publish_poll.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -8,10 +9,8 @@ class AdminDashboard extends StatelessWidget {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
-    double fieldWidth =
-        screenWidth * 0.45; // Increased width for bigger buttons
-    double fieldHeight =
-        screenHeight * 0.12; // Increased height for bigger buttons
+    double fieldWidth = screenWidth * 0.45;
+    double fieldHeight = screenHeight * 0.12;
 
     return Scaffold(
       appBar: AppBar(
@@ -29,7 +28,6 @@ class AdminDashboard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Publish Poll Button
                 SizedBox(
                   width: fieldWidth,
                   height: fieldHeight,
@@ -43,7 +41,10 @@ class AdminDashboard extends StatelessWidget {
                       shadowColor: Colors.black.withOpacity(0.3),
                     ),
                     onPressed: () {
-                      // Action for Publish Poll
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const AdminProfile()));
                     },
                     child: const Text(
                       "Publish Poll",
@@ -51,8 +52,7 @@ class AdminDashboard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 20), // Space between the buttons
-                // Create Poll Button
+                const SizedBox(width: 20),
                 SizedBox(
                   width: fieldWidth,
                   height: fieldHeight,
@@ -65,9 +65,7 @@ class AdminDashboard extends StatelessWidget {
                       elevation: 5,
                       shadowColor: Colors.black.withOpacity(0.3),
                     ),
-                    onPressed: () {
-                      // Action for Create Poll
-                    },
+                    onPressed: () {},
                     child: const Text(
                       "Create Poll",
                       style: TextStyle(fontSize: 18, color: Colors.white),
