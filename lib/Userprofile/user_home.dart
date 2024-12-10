@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../Voting/voting_screen.dart';
+
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
 
@@ -10,6 +12,16 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
+  // Function to navigate to VotingScreen with poll data
+  void navigateToVotingScreen(Map<String, dynamic> poll) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VotingScreen(pollData: poll),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,6 +45,7 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             const SizedBox(height: 30),
+            // PTI vs PPP poll
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
@@ -42,12 +55,14 @@ class _UserProfileState extends State<UserProfile> {
                     const Text("PTI vs PPP"),
                     FilledButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const VotingScreen(),
-                          ),
-                        );
+                        // Navigating with unique poll data for PTI vs PPP
+                        navigateToVotingScreen({
+                          "question": "What is your favorite political party?",
+                          "options": [
+                            {"text": "PTI", "votes": 0},
+                            {"text": "PPP", "votes": 0},
+                          ],
+                        });
                       },
                       child: const Text("Vote"),
                     ),
@@ -56,6 +71,7 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             const SizedBox(height: 20),
+            // Cheezious vs Butt Karahi poll
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
@@ -65,12 +81,14 @@ class _UserProfileState extends State<UserProfile> {
                     const Text("Cheezious vs Butt Karahi"),
                     FilledButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const VotingScreen(),
-                          ),
-                        );
+                        // Navigating with unique poll data for Cheezious vs Butt Karahi
+                        navigateToVotingScreen({
+                          "question": "What restaurant provides the best food?",
+                          "options": [
+                            {"text": "Cheezious", "votes": 0},
+                            {"text": "Butt Karahi", "votes": 0},
+                          ],
+                        });
                       },
                       child: const Text("Vote"),
                     ),
@@ -78,7 +96,8 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
             ),
-            const SizedBox(height: 20), // Space between cards
+            const SizedBox(height: 20),
+            // Best City poll
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(10.0),
@@ -88,12 +107,14 @@ class _UserProfileState extends State<UserProfile> {
                     const Text("Best City: Islamabad or Lahore"),
                     FilledButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const VotingScreen(),
-                          ),
-                        );
+                        // Navigating with unique poll data for Islamabad vs Lahore
+                        navigateToVotingScreen({
+                          "question": "What is your favorite city?",
+                          "options": [
+                            {"text": "Islamabad", "votes": 0},
+                            {"text": "Lahore", "votes": 0},
+                          ],
+                        });
                       },
                       child: const Text("Vote"),
                     ),
@@ -101,32 +122,16 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
             ),
-            const SizedBox(height: 30), // Space below the last card
+            const SizedBox(height: 30),
             const Center(
               child: Text(
                 "More polls coming soon!",
                 style: TextStyle(fontSize: 16, color: Colors.blueGrey),
               ),
             ),
-            const SizedBox(height: 20), // Space before footer or FAB
+            const SizedBox(height: 20),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class VotingScreen extends StatelessWidget {
-  const VotingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Vote Now"),
-      ),
-      body: const Center(
-        child: Text("Welcome to the voting screen!"),
       ),
     );
   }
