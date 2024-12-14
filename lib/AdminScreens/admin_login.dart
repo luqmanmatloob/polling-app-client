@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:polling_app/AdminScreens/admin_home.dart';
-import 'package:polling_app/AdminScreens/admin_register.dart';
+import 'package:http/http.dart' as http;
+import 'package:polling_app/AdminScreens/admin_home.dart'; // Update your import path if needed
+import 'package:polling_app/AdminScreens/admin_register.dart'; // Update your import path if needed
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AdminLoginWithFields extends StatefulWidget {
   const AdminLoginWithFields({super.key});
@@ -17,26 +20,57 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
 
   final _formKey = GlobalKey<FormState>();
 
-  // Example admin credentials
-  final String _adminUsername = "admin";
-  final String _adminPassword = "admin123";
+  String? _usernameError; // For username error message
+  String? _passwordError; // For password error message
 
-  void _login() {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       final enteredUsername = _usernameController.text.trim();
       final enteredPassword = _passwordController.text.trim();
 
-      if (enteredUsername == _adminUsername &&
-          enteredPassword == _adminPassword) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AdminDashboard()),
-        );
-      } else {
-        // Show invalid credentials error
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid username or password!")),
-        );
+      final url =
+          Uri.parse('http://localhost:5000/api/auth/login'); // Your API URL
+      final headers = {"Content-Type": "application/json"};
+      final body = jsonEncode({
+        "email":
+            enteredUsername, // Send the entered username (can be email or username)
+        "password": enteredPassword,
+      });
+
+      try {
+        final response = await http.post(url, headers: headers, body: body);
+
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          String token = responseBody['token'];
+
+          // Save token securely using SharedPreferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('jwt_token', token);
+
+          // Navigate to the admin dashboard after successful login
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const AdminDashboard()), // Admin Dashboard
+            );
+          }
+        } else {
+          final responseBody = jsonDecode(response.body);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${responseBody['message']}')),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error connecting to server')),
+          );
+        }
       }
     }
   }
@@ -72,28 +106,40 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Username Field with Custom Error Message
                     SizedBox(
                       width: fieldWidth,
                       height: fieldHeight,
                       child: TextFormField(
                         controller: _usernameController,
                         decoration: InputDecoration(
-                          labelText: "Admin Username",
+                          labelText: "Email or Admin Username",
                           contentPadding: const EdgeInsets.symmetric(
                               vertical: 0, horizontal: 15),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          errorText:
+                              _usernameError, // Display custom error message
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return "Please enter your username";
+                            setState(() {
+                              _usernameError =
+                                  "Please enter your email or username";
+                            });
+                            return ''; // Prevent default error
                           }
+                          setState(() {
+                            _usernameError = null; // Clear the error when valid
+                          });
                           return null;
                         },
                       ),
                     ),
                     const SizedBox(height: 10),
+
+                    // Password Field with Custom Error Message
                     SizedBox(
                       width: fieldWidth,
                       height: fieldHeight,
@@ -107,16 +153,26 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
+                          errorText:
+                              _passwordError, // Display custom error message
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return "Please enter your password";
+                            setState(() {
+                              _passwordError = "Please enter your password";
+                            });
+                            return ''; // Prevent default error
                           }
+                          setState(() {
+                            _passwordError = null; // Clear the error when valid
+                          });
                           return null;
                         },
                       ),
                     ),
                     const SizedBox(height: 20),
+
+                    // Login Button
                     FilledButton(
                       style: FilledButton.styleFrom(
                         padding: EdgeInsets.zero,
@@ -130,6 +186,8 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
                           const Text("Login", style: TextStyle(fontSize: 16)),
                     ),
                     const SizedBox(height: 20),
+
+                    // Register Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
