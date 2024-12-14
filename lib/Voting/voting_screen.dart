@@ -93,15 +93,11 @@ class VotingScreenState extends State<VotingScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    // Navigate to home (implement navigation)
-                  },
+                  onPressed: () {},
                   child: const Text("Home"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Navigate to vote (implement navigation)
-                  },
+                  onPressed: () {},
                   child: const Text("Vote"),
                 ),
               ],

@@ -12,7 +12,6 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  // Function to navigate to VotingScreen with poll data
   void navigateToVotingScreen(Map<String, dynamic> poll) {
     Navigator.push(
       context,
@@ -55,7 +54,6 @@ class _UserProfileState extends State<UserProfile> {
                     const Text("PTI vs PPP"),
                     FilledButton(
                       onPressed: () {
-                        // Navigating with unique poll data for PTI vs PPP
                         navigateToVotingScreen({
                           "question": "What is your favorite political party?",
                           "options": [
@@ -81,7 +79,6 @@ class _UserProfileState extends State<UserProfile> {
                     const Text("Cheezious vs Butt Karahi"),
                     FilledButton(
                       onPressed: () {
-                        // Navigating with unique poll data for Cheezious vs Butt Karahi
                         navigateToVotingScreen({
                           "question": "What restaurant provides the best food?",
                           "options": [
@@ -107,7 +104,6 @@ class _UserProfileState extends State<UserProfile> {
                     const Text("Best City: Islamabad or Lahore"),
                     FilledButton(
                       onPressed: () {
-                        // Navigating with unique poll data for Islamabad vs Lahore
                         navigateToVotingScreen({
                           "question": "What is your favorite city?",
                           "options": [

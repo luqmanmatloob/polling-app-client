@@ -14,7 +14,6 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   final _optionController3 = TextEditingController();
 
   void createPoll() {
-    // Retrieve the poll question and options from the controllers
     String question = _questionController.text;
     List<String> options = [
       _optionController1.text,
@@ -22,10 +21,6 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       _optionController3.text
     ];
 
-    // Logic to create the poll goes here.
-    // Example: Saving or sending the poll data.
-
-    // For now, showing the success message with the question and options.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Poll Created: $question\nOptions: $options'),

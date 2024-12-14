@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:polling_app/UserScreen/log_in.dart';
 import 'package:polling_app/Userprofile/user_home.dart';
 
@@ -25,6 +27,63 @@ class _UserLoginState extends State<RegisterLogin> {
   String? _passwordError;
   String? _confirmPasswordError;
 
+  Future<void> _registerUser() async {
+    final url = Uri.parse(
+        "http://192.168.1.7:5000/api/auth/register"); // Use your local IP address here
+
+    final headers = {"Content-Type": "application/json"};
+
+    final body = jsonEncode({
+      "name": _fullNameController.text,
+      "email": _emailController.text,
+      "password": _passwordController.text,
+      "role": "user",
+    });
+
+    // Save the current BuildContext
+    final currentContext = context;
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 201) {
+        // Registration successful
+        if (currentContext.mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            const SnackBar(content: Text('Registration successful!')),
+          );
+          Navigator.push(
+            currentContext,
+            MaterialPageRoute(builder: (context) => const UserProfile()),
+          );
+        }
+      } else {
+        // Registration failed
+        String errorMessage = 'Registration failed. Please try again.';
+        try {
+          final responseBody = jsonDecode(response.body);
+          if (responseBody['message'] != null) {
+            errorMessage = responseBody['message'];
+          }
+        } catch (e) {
+          errorMessage = 'Error processing the response.';
+        }
+
+        if (currentContext.mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
+        }
+      }
+    } catch (e) {
+      if (currentContext.mounted) {
+        ScaffoldMessenger.of(currentContext).showSnackBar(
+          const SnackBar(content: Text('Error connecting to the server.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -48,112 +107,36 @@ class _UserLoginState extends State<RegisterLogin> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-                    border: InputBorder.none,
-                    labelText: 'Full Name',
-                  ),
-                ),
+              _buildTextField(
+                controller: _fullNameController,
+                label: 'Full Name',
+                error: _fullNameError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
               ),
-              if (_fullNameError != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Text(
-                    _fullNameError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 10),
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Email',
-                  ),
-                ),
+              _buildTextField(
+                controller: _emailController,
+                label: 'Email',
+                error: _emailError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
               ),
-              if (_emailError != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Text(
-                    _emailError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 10),
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Password',
-                  ),
-                ),
+              _buildTextField(
+                controller: _passwordController,
+                label: 'Password',
+                error: _passwordError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
+                obscureText: true,
               ),
-              if (_passwordError != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Text(
-                    _passwordError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 10),
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Confirm Password',
-                  ),
-                ),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                label: 'Confirm Password',
+                error: _confirmPasswordError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
+                obscureText: true,
               ),
-              if (_confirmPasswordError != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Text(
-                    _confirmPasswordError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ),
               const SizedBox(height: 20),
               SizedBox(
                 width: fieldWidth,
@@ -192,13 +175,7 @@ class _UserLoginState extends State<RegisterLogin> {
                           _emailError == null &&
                           _passwordError == null &&
                           _confirmPasswordError == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Processing Data')),
-                        );
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const UserProfile()));
+                        _registerUser();
                       }
                     });
                   },
@@ -216,10 +193,11 @@ class _UserLoginState extends State<RegisterLogin> {
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const UserLoginWithFields()));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserLoginWithFields(),
+                        ),
+                      );
                     },
                     child: const Text(
                       "Sign In",
@@ -236,6 +214,47 @@ class _UserLoginState extends State<RegisterLogin> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? error,
+    required double fieldWidth,
+    required double fieldHeight,
+    bool obscureText = false,
+  }) {
+    return Column(
+      children: [
+        Container(
+          width: fieldWidth,
+          height: fieldHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEEEEE),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey),
+          ),
+          child: TextFormField(
+            controller: controller,
+            obscureText: obscureText,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              labelText: label,
+            ),
+          ),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0),
+            child: Text(
+              error,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 }

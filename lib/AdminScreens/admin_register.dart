@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-
+import 'package:http/http.dart' as http;
 import 'admin_home.dart';
 import 'admin_login.dart';
 
@@ -28,6 +29,48 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
   String? _adminPasswordError;
   String? _adminConfirmPasswordError;
 
+  // Function to handle API registration
+  Future<void> _registerAdmin() async {
+    final url = Uri.parse(
+        'http://192.168.1.7:5000/api/auth/register'); // Replace with your server IP
+    final headers = {"Content-Type": "application/json"};
+
+    final body = jsonEncode({
+      "name": _adminUsernameController.text,
+      "email": _adminEmailController.text,
+      "password": _adminPasswordController.text,
+      "role": "admin", // Role is set to admin
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (!mounted) return; // Ensure the widget is still mounted
+
+      if (response.statusCode == 201) {
+        // Registration successful
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Admin registration successful!')),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
+        );
+      } else {
+        // Registration failed
+        final responseBody = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${responseBody['message']}')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return; // Ensure the widget is still mounted
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error connecting to server')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -51,6 +94,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
+              // Admin Username Field
               Container(
                 width: fieldWidth,
                 height: fieldHeight,
@@ -78,6 +122,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                   ),
                 ),
               const SizedBox(height: 10),
+              // Admin Email Field
               Container(
                 width: fieldWidth,
                 height: fieldHeight,
@@ -104,6 +149,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                   ),
                 ),
               const SizedBox(height: 10),
+              // Admin Password Field
               Container(
                 width: fieldWidth,
                 height: fieldHeight,
@@ -131,6 +177,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                   ),
                 ),
               const SizedBox(height: 10),
+              // Admin Confirm Password Field
               Container(
                 width: fieldWidth,
                 height: fieldHeight,
@@ -158,6 +205,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                   ),
                 ),
               const SizedBox(height: 20),
+              // Register Button
               SizedBox(
                 width: fieldWidth,
                 height: fieldHeight,
@@ -197,13 +245,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                           _adminEmailError == null &&
                           _adminPasswordError == null &&
                           _adminConfirmPasswordError == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Processing Data')),
-                        );
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const AdminDashboard()));
+                        _registerAdmin(); // Call the registration function
                       }
                     });
                   },
@@ -214,6 +256,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                 ),
               ),
               const SizedBox(height: 20),
+              // Sign In Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -221,10 +264,11 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const AdminLoginWithFields()));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminLoginWithFields(),
+                        ),
+                      );
                     },
                     child: const Text(
                       "Sign In",
