@@ -45,7 +45,7 @@ class AdminDashboard extends StatelessWidget {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const AdminProfile()));
+                              builder: (context) => const PublishPollScreen()));
                     },
                     child: const Text(
                       "Publish Poll",
@@ -67,10 +67,12 @@ class AdminDashboard extends StatelessWidget {
                       shadowColor: Colors.black.withOpacity(0.3),
                     ),
                     onPressed: () {
+                      // Navigate to CreatePollScreen without passing refreshPollList
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const CreatePollScreen()));
+                            builder: (context) => const CreatePollScreen(),
+                          ));
                     },
                     child: const Text(
                       "Create Poll",

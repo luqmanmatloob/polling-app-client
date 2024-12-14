@@ -28,8 +28,7 @@ class _UserLoginState extends State<RegisterLogin> {
   String? _confirmPasswordError;
 
   Future<void> _registerUser() async {
-    final url = Uri.parse(
-        "http://192.168.1.7:5000/api/auth/register"); // Use your local IP address here
+    final url = Uri.parse("http://192.168.1.7:5000/api/auth/register");
 
     final headers = {"Content-Type": "application/json"};
 

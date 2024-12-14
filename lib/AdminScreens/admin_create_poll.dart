@@ -4,7 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 
 class CreatePollScreen extends StatefulWidget {
-  const CreatePollScreen({super.key});
+  final Function?
+      refreshPollList; // Optional parameter to refresh the poll list
+
+  const CreatePollScreen(
+      {super.key, this.refreshPollList}); // Optional parameter
 
   @override
   State<CreatePollScreen> createState() => _CreatePollScreenState();
@@ -16,17 +20,16 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   final _optionController2 = TextEditingController();
   final _optionController3 = TextEditingController();
 
-  // Initialize the logger instance
   final logger = Logger(
     filter: DevelopmentFilter(),
     printer: PrettyPrinter(),
   );
 
-  // JWT Token
+  // JWT token
   String token =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQ5YTJlMzg0MmI0ODQ5NmY5Mzk3OSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDE4OTkzMywiZXhwIjoxNzQxOTY1OTMzfQ.gP3sLfS3Q3fgPFvXts50hnfYV5ooVgxGrA1lChvGMxM";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQ5YTJlMzg0MmI0ODQ5NmY5Mzk3OSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDE5MzUxNSwiZXhwIjoxNzQxOTY5NTE1fQ.MbOieAu1GXnzBGz05wpynXzhsSfXFLzxzG43KdCK4iE"; // Replace this with your actual JWT token
 
-  // Create Poll method to make API call
+  // Function to create a poll
   Future<void> createPoll() async {
     String question = _questionController.text;
     List<String> options = [
@@ -35,47 +38,49 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       _optionController3.text
     ];
 
-    // API URL for creating a poll
-    final url = Uri.parse('http://localhost:5000/api/polls/create');
-
-    // Headers including the Authorization token
+    final url = Uri.parse(
+        'http://localhost:5000/api/polls/create'); // Replace with your server URL
     final headers = {
       "Content-Type": "application/json",
-      "Authorization": "Bearer $token", // Token used here
+      "Authorization": "Bearer $token", // Pass the JWT token here
     };
 
-    // Poll data in the correct format
     final body = jsonEncode({
-      "title":
-          "Poll Title", // You can replace this with a dynamic title if needed
+      "title": "Poll Title", // You can modify this to dynamic if needed
       "question": question,
       "options": options,
     });
 
-    // Making the POST request to create the poll
     try {
       final response = await http.post(url, headers: headers, body: body);
 
-      // Log the entire response
       logger.d('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        // Poll created successfully
         final responseBody = jsonDecode(response.body);
         String pollId = responseBody['id'] ?? 'Unknown ID';
 
-        // Log message
         logger.i('Poll Created Successfully. Poll ID: $pollId');
 
-        // Show SnackBar with Poll ID
+        // Check if the widget is still mounted before showing the SnackBar
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Poll Created: $question\nPoll ID: $pollId')),
           );
         }
+
+        // Call the refreshPollList function if it is not null
+        widget.refreshPollList?.call();
+
+        // Navigate back to the previous screen (check if mounted before navigating)
+        if (mounted) {
+          Navigator.pop(context);
+        }
       } else {
         final responseBody = jsonDecode(response.body);
+
+        // Check if the widget is still mounted before showing the SnackBar
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${responseBody['message']}')),
@@ -83,33 +88,29 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         }
       }
     } catch (e) {
-      // Handle errors
+      logger.e('Error: $e');
+
+      // Check if the widget is still mounted before showing the SnackBar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error connecting to server')),
         );
       }
-      // Logging the error using logger
-      logger.e('Error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Create Poll"),
-      ),
+      appBar: AppBar(title: const Text("Create Poll")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            const Text(
-              "Enter Poll Question",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Enter Poll Question",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextField(
               controller: _questionController,
               decoration: const InputDecoration(
@@ -118,10 +119,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "Enter Poll Options",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Enter Poll Options",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextField(
               controller: _optionController1,
               decoration: const InputDecoration(
@@ -150,19 +149,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 5,
-                  shadowColor: Colors.black.withOpacity(0.3),
-                ),
                 onPressed: createPoll,
-                child: const Text(
-                  "Create Poll",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
+                child: const Text("Create Poll"),
               ),
             ),
           ],
