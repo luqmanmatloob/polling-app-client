@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:polling_app/AdminScreens/admin_home.dart'; // Update your import path if needed
-import 'package:polling_app/AdminScreens/admin_register.dart'; // Update your import path if needed
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:polling_app/AdminScreens/admin_home.dart'; // Your admin home screen
+import 'package:logger/logger.dart'; // Import the logger package
 
 class AdminLoginWithFields extends StatefulWidget {
   const AdminLoginWithFields({super.key});
@@ -17,23 +17,24 @@ class AdminLoginWithFields extends StatefulWidget {
 class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
+  String? _usernameError;
+  String? _passwordError;
 
-  String? _usernameError; // For username error message
-  String? _passwordError; // For password error message
+  // Initialize logger
+  final Logger logger = Logger();
 
+  // Login API call
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       final enteredUsername = _usernameController.text.trim();
       final enteredPassword = _passwordController.text.trim();
 
-      final url =
-          Uri.parse('http://localhost:5000/api/auth/login'); // Your API URL
+      final url = Uri.parse('http://localhost:5000/api/auth/login'); // API URL
       final headers = {"Content-Type": "application/json"};
       final body = jsonEncode({
         "email":
-            enteredUsername, // Send the entered username (can be email or username)
+            enteredUsername, // Send entered username (can be email or username)
         "password": enteredPassword,
       });
 
@@ -41,12 +42,16 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
         final response = await http.post(url, headers: headers, body: body);
 
         if (response.statusCode == 200) {
+          // Extract the token from the response
           final responseBody = jsonDecode(response.body);
           String token = responseBody['token'];
 
-          // Save token securely using SharedPreferences
+          // Save token in SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('jwt_token', token);
+
+          // Use logger for logging
+          logger.i('JWT Token: $token');
 
           // Navigate to the admin dashboard after successful login
           if (mounted) {
@@ -71,8 +76,82 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
             const SnackBar(content: Text('Error connecting to server')),
           );
         }
+        // Log error using logger
+        logger.e('Error connecting to server: $e');
       }
     }
+  }
+
+  // Updated getToken method using POST request for token fetching
+  Future<String?> getToken() async {
+    final url = Uri.parse(
+        'http://localhost:5000/api/auth/token'); // API endpoint to fetch token
+    final headers = {"Content-Type": "application/json"};
+    final body = jsonEncode({
+      "username": "your_username_here", // Replace with your login credentials
+      "password": "your_password_here",
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        String token = responseBody['token'];
+
+        // Save token in SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', token);
+
+        // Log token using logger
+        logger.i('Fetched Token: $token');
+        return token;
+      } else {
+        // Log failure using logger
+        logger.e("Failed to fetch token. Status: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      // Log error using logger
+      logger.e("Error occurred: $e");
+      return null;
+    }
+  }
+
+  // Example of using token for authenticated API call
+  Future<void> someAuthenticatedApiCall() async {
+    String? token = await getToken(); // Retrieve the token
+
+    if (token == null) {
+      logger.e("No token found. Please log in first.");
+      return;
+    }
+
+    final url = Uri.parse('http://localhost:5000/api/protected-resource');
+    final headers = {
+      "Content-Type": "application/json",
+      "Authorization":
+          "Bearer $token", // Include the token in the Authorization header
+    };
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        logger.i("Request successful");
+      } else {
+        logger.e("Request failed with status: ${response.statusCode}");
+      }
+    } catch (e) {
+      logger.e("Error occurred: $e");
+    }
+  }
+
+  // Logout function to remove token from SharedPreferences
+  Future<void> logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('jwt_token'); // Remove token on logout
+    logger.i("Logged out successfully");
   }
 
   @override
@@ -200,8 +279,7 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const AdminRegisterLogin(),
+                                builder: (context) => const AdminDashboard(),
                               ),
                             );
                           },

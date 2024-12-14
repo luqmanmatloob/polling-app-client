@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 
 class CreatePollScreen extends StatefulWidget {
   const CreatePollScreen({super.key});
@@ -13,7 +16,18 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   final _optionController2 = TextEditingController();
   final _optionController3 = TextEditingController();
 
-  void createPoll() {
+  // Initialize the logger instance
+  final logger = Logger(
+    filter: DevelopmentFilter(),
+    printer: PrettyPrinter(),
+  );
+
+  // JWT Token
+  String token =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQ5YTJlMzg0MmI0ODQ5NmY5Mzk3OSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDE4OTkzMywiZXhwIjoxNzQxOTY1OTMzfQ.gP3sLfS3Q3fgPFvXts50hnfYV5ooVgxGrA1lChvGMxM";
+
+  // Create Poll method to make API call
+  Future<void> createPoll() async {
     String question = _questionController.text;
     List<String> options = [
       _optionController1.text,
@@ -21,11 +35,63 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       _optionController3.text
     ];
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Poll Created: $question\nOptions: $options'),
-      ),
-    );
+    // API URL for creating a poll
+    final url = Uri.parse('http://localhost:5000/api/polls/create');
+
+    // Headers including the Authorization token
+    final headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token", // Token used here
+    };
+
+    // Poll data in the correct format
+    final body = jsonEncode({
+      "title":
+          "Poll Title", // You can replace this with a dynamic title if needed
+      "question": question,
+      "options": options,
+    });
+
+    // Making the POST request to create the poll
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      // Log the entire response
+      logger.d('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Poll created successfully
+        final responseBody = jsonDecode(response.body);
+        String pollId = responseBody['id'] ?? 'Unknown ID';
+
+        // Log message
+        logger.i('Poll Created Successfully. Poll ID: $pollId');
+
+        // Show SnackBar with Poll ID
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Poll Created: $question\nPoll ID: $pollId')),
+          );
+        }
+      } else {
+        final responseBody = jsonDecode(response.body);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: ${responseBody['message']}')),
+          );
+        }
+      }
+    } catch (e) {
+      // Handle errors
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error connecting to server')),
+        );
+      }
+      // Logging the error using logger
+      logger.e('Error: $e');
+    }
   }
 
   @override
