@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'admin_home.dart';
-import 'admin_login.dart';
+import 'admin_home.dart'; // Your admin dashboard or home screen
+import 'admin_login.dart'; // Admin login screen to navigate to
 
 class AdminRegisterLogin extends StatefulWidget {
   const AdminRegisterLogin({super.key});
@@ -32,7 +32,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
   // Function to handle API registration
   Future<void> _registerAdmin() async {
     final url = Uri.parse(
-        'http://192.168.1.7:5000/api/auth/register'); // Replace with your server IP
+        'http://localhost:5000/api/auth/register'); // Replace with your server IP
     final headers = {"Content-Type": "application/json"};
 
     final body = jsonEncode({
