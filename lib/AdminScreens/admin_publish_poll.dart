@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../Voting/voting_screen.dart';
+
+import 'admin_create_poll.dart';
+// Import CreatePollScreen
 
 class PublishPollScreen extends StatefulWidget {
   final Function?
@@ -16,7 +18,8 @@ class PublishPollScreen extends StatefulWidget {
 class _PublishPollScreenState extends State<PublishPollScreen> {
   List<Map<String, dynamic>> activePolls = [];
   String errorMessage = '';
-  String token = "YOUR_JWT_TOKEN"; // Use the correct JWT token
+  String token =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQ5YTJlMzg0MmI0ODQ5NmY5Mzk3OSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDE5NjM1MSwiZXhwIjoxNzQxOTcyMzUxfQ.PUZzTN7805Gy39lHtextCvqZNv9cOhhBFmcmvU24-gM"; // Use the correct JWT token here
 
   @override
   void initState() {
@@ -60,7 +63,7 @@ class _PublishPollScreenState extends State<PublishPollScreen> {
   // Publish Poll Method to make API call
   Future<void> publishPoll(String pollId) async {
     final url = Uri.parse(
-        'http://localhost:5000/api/polls/publish/$pollId'); // API endpoint
+        'http://localhost:5000/api/polls/publish/$pollId'); // API endpoint for publishing poll
 
     final headers = {
       "Content-Type": "application/json",
@@ -100,12 +103,14 @@ class _PublishPollScreenState extends State<PublishPollScreen> {
     }
   }
 
-  // Navigate to VotingScreen
-  void navigateToVotingScreen(Map<String, dynamic> poll) {
+  // Navigate to CreatePollScreen
+  void navigateToCreatePollScreen() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => VotingScreen(pollData: poll),
+        builder: (context) => const CreatePollScreen(
+            // Pass refresh function to CreatePollScreen
+            ),
       ),
     );
   }
@@ -162,26 +167,14 @@ class _PublishPollScreenState extends State<PublishPollScreen> {
 
             const SizedBox(height: 30),
 
-            // "Publish Result" button after the cards
+            // "Create Poll" button to navigate to the CreatePollScreen
             SizedBox(
               width: double.infinity,
               height: 50,
               child: FilledButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 5,
-                  shadowColor: Colors.black.withOpacity(0.3),
-                ),
-                onPressed: () {
-                  // Action for publishing results
-                },
-                child: const Text(
-                  "Publish Result",
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
+                onPressed:
+                    navigateToCreatePollScreen, // Navigate to CreatePollScreen
+                child: const Text("Create Poll"),
               ),
             ),
             const SizedBox(height: 20),

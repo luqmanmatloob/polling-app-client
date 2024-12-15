@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:developer'; // Import the log package
+
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:polling_app/Userprofile/user_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,10 +24,11 @@ class _UserLoginWithFieldsState extends State<UserLoginWithFields> {
   String? _passwordError;
 
   Future<void> _loginUser() async {
-    final url =
-        Uri.parse('http://localhost:5000/api/auth/login'); // Your API URL
-    final headers = {"Content-Type": "application/json"};
+    // Load the API base URL from environment variables
+    final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+    final url = Uri.parse('$baseUrl/api/auth/login'); // Append endpoint
 
+    final headers = {"Content-Type": "application/json"};
     final body = jsonEncode({
       "email": _emailController.text,
       "password": _passwordController.text,
@@ -36,6 +40,9 @@ class _UserLoginWithFieldsState extends State<UserLoginWithFields> {
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
         String token = responseBody['token'];
+
+        // Log the token using the log method
+        log('JWT Token: $token'); // Structured logging for debugging
 
         // Save token securely using SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();

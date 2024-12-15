@@ -4,15 +4,12 @@ import 'package:polling_app/AdminScreens/admin_publish_poll.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-
     double fieldWidth = screenWidth * 0.45;
     double fieldHeight = screenHeight * 0.12;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
@@ -67,12 +64,10 @@ class AdminDashboard extends StatelessWidget {
                       shadowColor: Colors.black.withOpacity(0.3),
                     ),
                     onPressed: () {
-                      // Navigate to CreatePollScreen without passing refreshPollList
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const CreatePollScreen(),
-                          ));
+                              builder: (context) => const CreatePollScreen()));
                     },
                     child: const Text(
                       "Create Poll",
