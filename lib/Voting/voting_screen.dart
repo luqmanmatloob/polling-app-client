@@ -10,12 +10,18 @@ class VotingScreen extends StatefulWidget {
 }
 
 class VotingScreenState extends State<VotingScreen> {
+  bool hasVoted = false; // To track if the user has voted
+
   void incrementVote(int optionIndex) {
-    setState(() {
-      if (optionIndex >= 0 && optionIndex < widget.pollData['options'].length) {
-        widget.pollData['options'][optionIndex]['votes']++;
-      }
-    });
+    if (!hasVoted) {
+      setState(() {
+        if (optionIndex >= 0 &&
+            optionIndex < widget.pollData['options'].length) {
+          widget.pollData['options'][optionIndex]['votes']++;
+          hasVoted = true; // Mark as voted
+        }
+      });
+    }
   }
 
   @override
@@ -25,7 +31,11 @@ class VotingScreenState extends State<VotingScreen> {
         title: const Text("Poll Results"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          },
         ),
       ),
       body: Padding(
@@ -76,7 +86,17 @@ class VotingScreenState extends State<VotingScreen> {
                                     style: const TextStyle(fontSize: 16)),
                                 IconButton(
                                   icon: const Icon(Icons.add_circle_outline),
-                                  onPressed: () => incrementVote(optionIndex),
+                                  onPressed: () {
+                                    incrementVote(optionIndex);
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text('You have voted!'),
+                                        ),
+                                      );
+                                    }
+                                  },
                                 ),
                               ],
                             ),
@@ -93,11 +113,17 @@ class VotingScreenState extends State<VotingScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    if (mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
                   child: const Text("Home"),
                 ),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: hasVoted
+                      ? null
+                      : () {}, // Disable the button after voting
                   child: const Text("Vote"),
                 ),
               ],

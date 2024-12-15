@@ -67,7 +67,7 @@ class _AdminLoginWithFieldsState extends State<AdminLoginWithFields> {
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const AdminDashboard()),
+              MaterialPageRoute(builder: (context) => AdminDashboard()),
             );
           }
         } else {
