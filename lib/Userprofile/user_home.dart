@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // For JSON encoding/decoding
 import '../Voting/voting_screen.dart';
 
 class UserProfile extends StatefulWidget {
@@ -12,11 +13,63 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
+  List<Map<String, dynamic>> polls = []; // List to hold the poll data
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPolls(); // Fetch the polls when the widget is initialized
+  }
+
+  // Fetch polls from the API
+  Future<void> fetchPolls() async {
+    const url = 'http://localhost:5000/api/polls/getPublishedPolls';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        // Update the state with the fetched polls
+        if (mounted) {
+          setState(() {
+            polls = List<Map<String, dynamic>>.from(data);
+            isLoading = false;
+          });
+        }
+      } else {
+        // Handle failure response from the server
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch polls')),
+        );
+      }
+    } catch (e) {
+      // Handle error during the API request
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error fetching polls')),
+      );
+    }
+  }
+
+  // Navigate to the Voting Screen
   void navigateToVotingScreen(Map<String, dynamic> poll) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => VotingScreen(pollData: poll),
+        builder: (context) =>
+            VotingScreen(pollData: poll), // Pass the full poll data
       ),
     );
   }
@@ -24,6 +77,9 @@ class _UserProfileState extends State<UserProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Profile'),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
         child: Column(
@@ -44,80 +100,45 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             const SizedBox(height: 30),
-            // PTI vs PPP poll
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("PTI vs PPP"),
-                    FilledButton(
-                      onPressed: () {
-                        navigateToVotingScreen({
-                          "question": "What is your favorite political party?",
-                          "options": [
-                            {"text": "PTI", "votes": 0},
-                            {"text": "PPP", "votes": 0},
-                          ],
-                        });
+
+            // If loading, show a progress indicator
+            isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Expanded(
+                    child: ListView.builder(
+                      itemCount: polls.length,
+                      itemBuilder: (context, index) {
+                        final poll = polls[index];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(poll['title'] ?? 'No Title'),
+                                FilledButton(
+                                  onPressed: () {
+                                    navigateToVotingScreen({
+                                      "id": poll['_id'], // Pass the poll ID
+                                      "question": poll['title'] ?? 'No Title',
+                                      "options": List.generate(
+                                        poll['options'].length,
+                                        (index) => {
+                                          "text": poll['options'][index],
+                                          "votes": poll['votes'][index] ?? 0,
+                                        },
+                                      ),
+                                    });
+                                  },
+                                  child: const Text("Vote"),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
                       },
-                      child: const Text("Vote"),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Cheezious vs Butt Karahi poll
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Cheezious vs Butt Karahi"),
-                    FilledButton(
-                      onPressed: () {
-                        navigateToVotingScreen({
-                          "question": "What restaurant provides the best food?",
-                          "options": [
-                            {"text": "Cheezious", "votes": 0},
-                            {"text": "Butt Karahi", "votes": 0},
-                          ],
-                        });
-                      },
-                      child: const Text("Vote"),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Best City poll
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Best City: Islamabad or Lahore"),
-                    FilledButton(
-                      onPressed: () {
-                        navigateToVotingScreen({
-                          "question": "What is your favorite city?",
-                          "options": [
-                            {"text": "Islamabad", "votes": 0},
-                            {"text": "Lahore", "votes": 0},
-                          ],
-                        });
-                      },
-                      child: const Text("Vote"),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
             const SizedBox(height: 30),
             const Center(
               child: Text(

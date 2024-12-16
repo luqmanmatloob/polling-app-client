@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:polling_app/UserScreen/log_in.dart'; // Replace with the correct import for login page
-import 'package:polling_app/Userprofile/user_home.dart'; // Replace with the correct import for user profile page
+import 'package:polling_app/UserScreen/log_in.dart';
+import 'package:polling_app/Userprofile/user_home.dart';
 
 class RegisterLogin extends StatefulWidget {
   const RegisterLogin({super.key});
@@ -23,48 +22,41 @@ class _UserLoginState extends State<RegisterLogin> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  bool isLoading = false;
+  String? _fullNameError;
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
 
-  // Method to handle registration process
   Future<void> _registerUser() async {
-    final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
-    if (baseUrl.isEmpty) {
-      debugPrint("API base URL is missing in .env file");
-      return;
-    }
-
-    final url = Uri.parse('$baseUrl/api/auth/register');
+    final url = Uri.parse("http://localhost:5000/api/auth/register");
     final headers = {"Content-Type": "application/json"};
+
     final body = jsonEncode({
-      "name": _fullNameController.text, // Full Name
-      "email": _emailController.text, // Email
-      "password": _passwordController.text, // Password
-      "role": "user", // User role
+      "name": _fullNameController.text,
+      "email": _emailController.text,
+      "password": _passwordController.text,
+      "role": "user",
     });
 
-    try {
-      if (mounted) {
-        setState(() {
-          isLoading = true;
-        });
-      }
+    // Save the current BuildContext
+    final currentContext = context;
 
-      final response = await http
-          .post(url, headers: headers, body: body)
-          .timeout(const Duration(seconds: 30));
+    try {
+      final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 201) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        // Registration successful
+        if (currentContext.mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
             const SnackBar(content: Text('Registration successful!')),
           );
-          // Navigate to the user profile screen
-          Navigator.pushReplacement(
-            context,
+          Navigator.push(
+            currentContext,
             MaterialPageRoute(builder: (context) => const UserProfile()),
           );
         }
       } else {
+        // Registration failed
         String errorMessage = 'Registration failed. Please try again.';
         try {
           final responseBody = jsonDecode(response.body);
@@ -75,25 +67,17 @@ class _UserLoginState extends State<RegisterLogin> {
           errorMessage = 'Error processing the response.';
         }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (currentContext.mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
             SnackBar(content: Text(errorMessage)),
           );
         }
       }
     } catch (e) {
-      debugPrint("Error: $e");
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (currentContext.mounted) {
+        ScaffoldMessenger.of(currentContext).showSnackBar(
           const SnackBar(content: Text('Error connecting to the server.')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
       }
     }
   }
@@ -121,115 +105,37 @@ class _UserLoginState extends State<RegisterLogin> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-              // Full Name TextField
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _fullNameController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Full Name',
-                  ),
-                ),
+              _buildTextField(
+                controller: _fullNameController,
+                label: 'Full Name',
+                error: _fullNameError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
               ),
-              const SizedBox(height: 10),
-
-              // Email TextField
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _emailController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Email',
-                  ),
-                ),
+              _buildTextField(
+                controller: _emailController,
+                label: 'Email',
+                error: _emailError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
               ),
-              const SizedBox(height: 10),
-
-              // Password TextField
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Password',
-                  ),
-                ),
+              _buildTextField(
+                controller: _passwordController,
+                label: 'Password',
+                error: _passwordError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
+                obscureText: true,
               ),
-              const SizedBox(height: 10),
-
-              // Confirm Password TextField
-              Container(
-                width: fieldWidth,
-                height: fieldHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEEEEE),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    } else if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    labelText: 'Confirm Password',
-                  ),
-                ),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                label: 'Confirm Password',
+                error: _confirmPasswordError,
+                fieldWidth: fieldWidth,
+                fieldHeight: fieldHeight,
+                obscureText: true,
               ),
               const SizedBox(height: 20),
-
-              // Submit Button
               SizedBox(
                 width: fieldWidth,
                 height: fieldHeight,
@@ -240,24 +146,44 @@ class _UserLoginState extends State<RegisterLogin> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: isLoading
-                      ? null
-                      : () {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            _registerUser(); // Call the registration method
-                          }
-                        },
-                  child: isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text(
-                          "Create Account",
-                          style: TextStyle(fontSize: 16),
-                        ),
+                  onPressed: () {
+                    setState(() {
+                      _fullNameError = null;
+                      _emailError = null;
+                      _passwordError = null;
+                      _confirmPasswordError = null;
+
+                      if (_fullNameController.text.isEmpty) {
+                        _fullNameError = 'Please enter your full name';
+                      }
+                      if (_emailController.text.isEmpty) {
+                        _emailError = 'Please enter your email';
+                      }
+                      if (_passwordController.text.isEmpty) {
+                        _passwordError = 'Please enter a password';
+                      }
+                      if (_confirmPasswordController.text.isEmpty) {
+                        _confirmPasswordError = 'Please confirm your password';
+                      } else if (_confirmPasswordController.text !=
+                          _passwordController.text) {
+                        _confirmPasswordError = 'Passwords do not match';
+                      }
+
+                      if (_fullNameError == null &&
+                          _emailError == null &&
+                          _passwordError == null &&
+                          _confirmPasswordError == null) {
+                        _registerUser();
+                      }
+                    });
+                  },
+                  child: const Text(
+                    "Create Account",
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Sign In navigation
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -286,6 +212,47 @@ class _UserLoginState extends State<RegisterLogin> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? error,
+    required double fieldWidth,
+    required double fieldHeight,
+    bool obscureText = false,
+  }) {
+    return Column(
+      children: [
+        Container(
+          width: fieldWidth,
+          height: fieldHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEEEEE),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey),
+          ),
+          child: TextFormField(
+            controller: controller,
+            obscureText: obscureText,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              labelText: label,
+            ),
+          ),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0),
+            child: Text(
+              error,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 }

@@ -54,7 +54,7 @@ class _AdminLoginState extends State<AdminRegisterLogin> {
         );
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => AdminDashboard()),
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
         );
       } else {
         // Registration failed
