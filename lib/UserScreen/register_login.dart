@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:polling_app/UserScreen/log_in.dart';
-import 'package:polling_app/Userprofile/user_home.dart';
+import 'package:polling_app/UserScreen/log_in.dart'; // Ensure this import points to your login screen
 
 class RegisterLogin extends StatefulWidget {
   const RegisterLogin({super.key});
@@ -38,25 +37,26 @@ class _UserLoginState extends State<RegisterLogin> {
       "role": "user",
     });
 
-    // Save the current BuildContext
-    final currentContext = context;
-
     try {
       final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 201) {
         // Registration successful
-        if (currentContext.mounted) {
-          ScaffoldMessenger.of(currentContext).showSnackBar(
-            const SnackBar(content: Text('Registration successful!')),
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Registration successful! Please log in.')),
           );
-          Navigator.push(
-            currentContext,
-            MaterialPageRoute(builder: (context) => const UserProfile()),
+          // Navigate to the login screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UserLoginWithFields(),
+            ),
           );
         }
       } else {
-        // Registration failed
+        // Handle registration failure
         String errorMessage = 'Registration failed. Please try again.';
         try {
           final responseBody = jsonDecode(response.body);
@@ -67,15 +67,15 @@ class _UserLoginState extends State<RegisterLogin> {
           errorMessage = 'Error processing the response.';
         }
 
-        if (currentContext.mounted) {
-          ScaffoldMessenger.of(currentContext).showSnackBar(
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage)),
           );
         }
       }
     } catch (e) {
-      if (currentContext.mounted) {
-        ScaffoldMessenger.of(currentContext).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error connecting to the server.')),
         );
       }
