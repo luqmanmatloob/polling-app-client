@@ -46,9 +46,12 @@ class _UserProfileState extends State<UserProfile> {
             isLoading = false;
           });
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to fetch polls')),
-        );
+        // Show SnackBar only if the widget is mounted
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to fetch polls')),
+          );
+        }
       }
     } catch (e) {
       // Handle error during the API request
@@ -57,21 +60,26 @@ class _UserProfileState extends State<UserProfile> {
           isLoading = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error fetching polls')),
-      );
+      // Show SnackBar only if the widget is mounted
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error fetching polls')),
+        );
+      }
     }
   }
 
   // Navigate to the Voting Screen
   void navigateToVotingScreen(Map<String, dynamic> poll) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            VotingScreen(pollData: poll), // Pass the full poll data
-      ),
-    );
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              VotingScreen(pollData: poll), // Pass the full poll data
+        ),
+      );
+    }
   }
 
   @override

@@ -1,161 +1,115 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:logger/logger.dart';
+import 'dart:developer'; // Import the dart:developer package for logging
+import 'package:http/http.dart' as http; // Import the http package
+import 'dart:convert'; // To handle JSON encoding/decoding
+import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 
 class VotingScreen extends StatefulWidget {
   final Map<String, dynamic> pollData;
-
   const VotingScreen({super.key, required this.pollData});
 
   @override
-  VotingScreenState createState() => VotingScreenState();
+  // ignore: library_private_types_in_public_api
+  _VotingScreenState createState() => _VotingScreenState();
 }
 
-class VotingScreenState extends State<VotingScreen> {
-  bool hasVoted = false; // To track if the user has voted
-  var logger = Logger(); // Initialize Logger instance
+class _VotingScreenState extends State<VotingScreen> {
+  late Map<String, dynamic> poll;
+  late String pollId;
+  String? token; // Variable to store JWT token
 
   @override
   void initState() {
     super.initState();
-    _checkIfUserHasVoted(); // Check if the user has voted when the widget loads
-  }
+    poll = widget.pollData;
+    pollId = poll['id'] ?? ''; // Ensure this is being extracted correctly
 
-  // Check if the user has already voted
-  Future<void> _checkIfUserHasVoted() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool voted =
-        prefs.getBool('hasVoted') ?? false; // Default to false if not set
-    setState(() {
-      hasVoted = voted;
-    });
-    logger.i("User has voted: $hasVoted"); // Log the vote status
-  }
+    // Log the pollId to check if it's passed correctly
+    log('Poll ID: $pollId');
 
-  // Save the vote status to SharedPreferences
-  Future<void> _saveVoteStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hasVoted', true); // Save that the user has voted
-    logger.i("Vote status saved: hasVoted = true"); // Log the saved status
-  }
-
-  // Function to call API and cast the vote
-  Future<void> _castVote(String pollId, String option) async {
-    final url = Uri.parse('http://localhost:5000/api/votes/cast');
-    const token =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWVlYTRmOGRkNzhhNjMyMzNhNzIwMSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM0Mjc3MTczLCJleHAiOjE3NDIwNTMxNzN9.YSuzRRPXhQag269Gb8OmT9X10OWZjVbsOvtm3uPNxfg';
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: json.encode({
-          'pollId': pollId,
-          'option': option,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        // If the response is successful, save the vote status
-        _saveVoteStatus();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Your vote has been cast successfully!')),
-          );
-          setState(() {
-            hasVoted = true; // Now user has voted, so update the state
-          });
-        }
-      } else if (response.statusCode == 400) {
-        // Handle if user has already voted
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You have already voted!')),
-          );
-        }
-        logger.i("User has already voted on this poll.");
-      } else {
-        // Handle other errors from the API
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${response.body}')),
-          );
-        }
-        logger.e("Error while casting vote: ${response.body}"); // Log error
-      }
-    } catch (e) {
-      // Handle errors such as no internet connection
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('An error occurred. Please try again later.')),
-        );
-      }
-      logger.e("Error occurred: $e"); // Log error
-    }
-  }
-
-  // Function to increment the vote
-  void incrementVote(int optionIndex) async {
-    if (!hasVoted) {
-      // Validate that pollData contains a valid 'id' and options
-      if (widget.pollData['_id'] == null || widget.pollData['_id'].isEmpty) {
+    // Handle the case where Poll ID is missing or invalid
+    if (pollId.isEmpty && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Poll ID is missing or invalid.')),
           );
         }
-        logger.e("Poll ID is missing or invalid.");
-        return;
-      }
+      });
+    }
 
-      if (widget.pollData['options'] == null ||
-          widget.pollData['options'].isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No options available to vote on.')),
-          );
-        }
-        logger.e("Poll options are missing or invalid.");
-        return;
-      }
+    // Get the token from SharedPreferences
+    _getToken();
+  }
 
-      // Proceed with casting the vote
-      if (optionIndex >= 0 &&
-          optionIndex < widget.pollData['options'].length &&
-          widget.pollData['options'][optionIndex]['text'] != null &&
-          widget.pollData['options'][optionIndex]['text'].isNotEmpty) {
-        setState(() {
-          widget.pollData['options'][optionIndex]['votes']++;
-        });
+  // Retrieve token from SharedPreferences
+  Future<void> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      token = prefs.getString('jwt_token'); // Retrieve JWT token
+    });
+    log('Token retrieved: $token');
+  }
 
-        await _castVote(
-          widget.pollData['_id'], // Correctly reference _id for the poll ID
-          widget.pollData['options'][optionIndex]['text'],
-        );
-      } else {
-        // Handle invalid option index or missing text
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Invalid vote option or missing text.')),
-          );
-        }
-        logger.e("Invalid option index or option text is null or empty.");
-      }
-    } else {
+  // Function to cast the vote by making an API request
+  Future<void> castVote(String option) async {
+    if (pollId.isEmpty || token == null) {
+      // Handle missing or invalid poll ID or token
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You have already voted!')),
+          const SnackBar(
+              content: Text('Poll ID or Token is missing or invalid.')),
         );
       }
-      logger.i("User attempted to vote again, but has already voted.");
+      return;
+    }
+
+    final url = Uri.parse('http://localhost:5000/api/votes/cast');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization':
+          'Bearer $token', // Use the token retrieved from SharedPreferences
+    };
+
+    final body = json.encode({
+      'pollId': pollId,
+      'option': option,
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        // Successfully casted vote
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vote casted successfully!')),
+          );
+        }
+
+        // Optionally, update the UI (increment the vote count)
+        setState(() {
+          final optionIndex =
+              poll['options'].indexWhere((opt) => opt['text'] == option);
+          if (optionIndex != -1) {
+            poll['options'][optionIndex]['votes'] += 1;
+          }
+        });
+      } else {
+        // Handle API failure
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to cast vote: ${response.body}')),
+          );
+        }
+      }
+    } catch (e) {
+      // Handle any exceptions
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
@@ -163,89 +117,22 @@ class VotingScreenState extends State<VotingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Poll Results"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (mounted) {
-              Navigator.pop(context);
-            }
-          },
-        ),
+        title: const Text('Vote on Poll'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Results",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Question:",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.pollData['question'],
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
-                    Column(
-                      children: widget.pollData['options']
-                          .asMap()
-                          .entries
-                          .map<Widget>((entry) {
-                        int optionIndex = entry.key;
-                        Map<String, dynamic> option = entry.value;
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(option['text'],
-                                  style: const TextStyle(fontSize: 16)),
-                            ),
-                            Row(
-                              children: [
-                                Text(option['votes'].toString(),
-                                    style: const TextStyle(fontSize: 16)),
-                                IconButton(
-                                  icon: const Icon(Icons.add_circle_outline),
-                                  onPressed: () {
-                                    incrementVote(optionIndex);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: () {
-                if (mounted) {
-                  Navigator.pop(context);
-                }
+      body: Column(
+        children: [
+          Text(poll['question']),
+          ...poll['options'].map<Widget>((option) {
+            return ListTile(
+              title: Text(option['text']),
+              trailing: Text('Votes: ${option['votes']}'),
+              onTap: () {
+                // Call the function to cast vote when the option is tapped
+                castVote(option['text']);
               },
-              child: const Text("Home"),
-            ),
-          ],
-        ),
+            );
+          }).toList(),
+        ],
       ),
     );
   }
