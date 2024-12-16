@@ -31,7 +31,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
 
     // Prepare poll data
     final pollData = {
-      "title": "Poll",
+      "title": question,
       "question": question,
       "options": options,
     };
