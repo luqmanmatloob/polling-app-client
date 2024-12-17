@@ -6,6 +6,22 @@ import 'package:polling_app/AdminScreens/result_home.dart'; // Import ResultHome
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false, // Disable the debug banner
+      home: AdminDashboard(),
+    );
+  }
+}
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
@@ -125,11 +141,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  // Function to refresh the screen
+  Future<void> refreshScreen() async {
+    setState(() {
+      isLoading = true; // Set loading state to true while refreshing
+    });
+    await fetchPolls(); // Fetch the polls again
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
+        actions: [
+          // Refresh button in the AppBar
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: refreshScreen, // Refresh screen when pressed
+          ),
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -137,7 +168,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 Expanded(
                   child: RefreshIndicator(
-                    onRefresh: fetchPolls,
+                    onRefresh: refreshScreen,
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: polls.length,
@@ -180,7 +211,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ResultHome(),
+                          builder: (context) => const ResultHome(),
                         ),
                       );
                     },
@@ -205,7 +236,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ).then((pollCreated) {
             if (pollCreated == true) {
-              fetchPolls(); // Refresh polls on return
+              refreshScreen(); // Refresh polls on return
             }
           });
         },

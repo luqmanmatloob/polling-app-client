@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:logger/logger.dart';
 
 class ResultHome extends StatefulWidget {
+  const ResultHome({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _ResultHomeState createState() => _ResultHomeState();
 }
 
 class _ResultHomeState extends State<ResultHome> {
   List<dynamic> polls = [];
   bool isLoading = true;
+  final Logger logger = Logger(); // Initialize logger
 
   @override
   void initState() {
@@ -52,7 +57,8 @@ class _ResultHomeState extends State<ResultHome> {
     final url = 'http://localhost:5000/api/polls/result/$pollId';
 
     try {
-      print("Fetching result for poll ID: $pollId"); // Debug log
+      logger
+          .i("Fetching result for poll ID: $pollId"); // Debug log using logger
       final response = await http.get(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
@@ -67,6 +73,7 @@ class _ResultHomeState extends State<ResultHome> {
         showSnackbar('Failed to fetch poll results');
       }
     } catch (e) {
+      logger.e('Error fetching poll results: $e'); // Log error using logger
       showSnackbar('Error fetching poll results: $e');
     }
   }
@@ -89,7 +96,7 @@ class _ResultHomeState extends State<ResultHome> {
                 int index = entry.key;
                 int votes = entry.value;
                 return Text('Option ${index + 1}: $votes votes');
-              }).toList(),
+              })
             ],
           ),
           actions: [
@@ -105,7 +112,8 @@ class _ResultHomeState extends State<ResultHome> {
 
   // Function to show a snackbar for errors or info
   void showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -133,10 +141,12 @@ class _ResultHomeState extends State<ResultHome> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    subtitle: Text('Created At: ${poll['createdAt'] ?? 'Unknown'}'),
+                    subtitle:
+                        Text('Created At: ${poll['createdAt'] ?? 'Unknown'}'),
                     trailing: ElevatedButton(
                       onPressed: () {
-                        print("Show Result button clicked for poll ID: ${poll['_id']}"); // Debug log
+                        logger.i(
+                            "Show Result button clicked for poll ID: ${poll['_id']}"); // Log button click using logger
                         fetchPollResult(poll['_id']);
                       },
                       style: ElevatedButton.styleFrom(
